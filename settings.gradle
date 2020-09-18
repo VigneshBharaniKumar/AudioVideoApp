@@ -1,0 +1,2 @@
+rootProject.name='AudioVideo'
+include ':app'
