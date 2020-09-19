@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.webkit.URLUtil;
 import android.widget.Button;
-import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -18,9 +17,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private VideoView videoView;
     private Button btnPlay;
+    private Button btnPre, btnFwd;
     private TextView txtBuffering;
 
-    private MediaController controller;
+//    private MediaController controller;
 
     private int mCurrentPosition = 0;
     private static final String PLAYBACK_TIME = "play_time";
@@ -38,11 +38,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         videoView = findViewById(R.id.videoView);
         btnPlay = findViewById(R.id.btnPlay);
+        btnPre = findViewById(R.id.btnPre);
+        btnFwd = findViewById(R.id.btnFwd);
         txtBuffering = findViewById(R.id.txtBuffering);
 
-        controller = new MediaController(this);
-        videoView.setMediaController(controller);
-        controller.setAnchorView(videoView);
+//        controller = new MediaController(this);
+//        videoView.setMediaController(controller);
+//        controller.setAnchorView(videoView);
 
         btnPlay.setOnClickListener(MainActivity.this);
 
@@ -51,13 +53,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
 
-        videoView.start();
+        if (v.getId() == R.id.btnPlay) {
+
+            if (!videoView.isPlaying()) {
+                btnPlay.setText("Pause");
+                videoView.start();
+            } else {
+                btnPlay.setText("Play");
+            }
+
+        }
+
+        else if (v.getId() == R.id.btnPre) {
+
+            /*Not working*/
+            videoView.seekTo(videoView.getCurrentPosition() - 10000);
+            videoView.start();
+
+        }
+
+        else if (v.getId() == R.id.btnFwd) {
+
+            /*Not working*/
+            videoView.seekTo(videoView.getCurrentPosition() + 10000);
+            videoView.start();
+
+        }
 
     }
 
     private void initializePlayer() {
 
         txtBuffering.setVisibility(View.VISIBLE);
+        btnPlay.setVisibility(View.GONE);
+        btnPre.setVisibility(View.GONE);
+        btnFwd.setVisibility(View.GONE);
+        btnPlay.setText("Play");
 
         Uri videoUri = getMedia(VIDEO_SAMPLE);
         videoView.setVideoURI(videoUri);
@@ -66,6 +97,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onPrepared(MediaPlayer mp) {
                 txtBuffering.setVisibility(View.INVISIBLE);
+                btnPlay.setVisibility(View.VISIBLE);
+                btnPre.setVisibility(View.VISIBLE);
+                btnFwd.setVisibility(View.VISIBLE);
 
                 if (mCurrentPosition > 0) {
                     videoView.seekTo(mCurrentPosition);
@@ -117,12 +151,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
+        mCurrentPosition = videoView.getCurrentPosition();
         videoView.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initializePlayer();
     }
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(PLAYBACK_TIME, videoView.getCurrentPosition());
+        outState.putInt(PLAYBACK_TIME, mCurrentPosition);
     }
 }
