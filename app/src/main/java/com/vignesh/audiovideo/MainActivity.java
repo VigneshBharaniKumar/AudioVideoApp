@@ -1,11 +1,13 @@
 package com.vignesh.audiovideo;
 
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.URLUtil;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -14,6 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -22,6 +26,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnPre, btnFwd;
     private TextView txtBuffering;
     private Button btnPlayMusic, btnPause, btnStop;
+    private SeekBar seekBarVolume;
+    private SeekBar seekBarMusic;
 
 //    private MediaController controller;
 
@@ -32,6 +38,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private MediaPlayer mediaPlayer;
     private static final String SAMPLE_MUSIC = String.valueOf(R.raw.sample_music);
+
+    private AudioManager audioManager;
+    private Timer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,12 +59,63 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnPlayMusic = findViewById(R.id.btnPlayMusic);
         btnPause = findViewById(R.id.btnPause);
         btnStop = findViewById(R.id.btnStop);
+        seekBarVolume = findViewById(R.id.seekBarVolume);
+        seekBarMusic = findViewById(R.id.seekBarMusic);
 
 //        controller = new MediaController(this);
 //        videoView.setMediaController(controller);
 //        controller.setAnchorView(videoView);
 
+        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        int maxSystemVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int currentSystemVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        seekBarVolume.setMax(maxSystemVolume);
+        seekBarVolume.setProgress(currentSystemVolume);
+        seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
         mediaPlayer = MediaPlayer.create(this, R.raw.sample_music);
+        seekBarMusic.setMax(mediaPlayer.getDuration());
+        seekBarMusic.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                mediaPlayer.pause();
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mediaPlayer.seekTo(seekBarMusic.getProgress());
+                mediaPlayer.start();
+            }
+        });
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mediaPlayer.seekTo(0);
+                timer.cancel();
+            }
+        });
 
         btnPlay.setOnClickListener(MainActivity.this);
         btnPre.setOnClickListener(MainActivity.this);
@@ -63,20 +123,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnPlayMusic.setOnClickListener(MainActivity.this);
         btnPause.setOnClickListener(MainActivity.this);
         btnStop.setOnClickListener(MainActivity.this);
-
-        /*Audio Media Player*/
-        /*try {
-            mediaPlayer.setDataSource("android.resource://" + getPackageName() + "/" + SAMPLE_MUSIC);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mediaPlayer.start();
-            }
-        });
-        mediaPlayer.prepareAsync();*/
 
     }
 
@@ -90,30 +136,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 videoView.start();
             } else {
                 btnPlay.setText("Play");
+                videoView.pause();
             }
 
         } else if (v.getId() == R.id.btnPre) {
 
-            /*Not working*/
             videoView.seekTo(videoView.getCurrentPosition() - 10000);
-            videoView.start();
 
         } else if (v.getId() == R.id.btnFwd) {
 
-            /*Not working*/
             videoView.seekTo(videoView.getCurrentPosition() + 10000);
-            videoView.start();
 
         } else if (v.getId() == R.id.btnPlayMusic) {
+
+            timer = new Timer();
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    seekBarMusic.setProgress(mediaPlayer.getCurrentPosition());
+                }
+            }, 0, 100);
 
             mediaPlayer.start();
 
         } else if (v.getId() == R.id.btnPause) {
 
+            timer.cancel();
             mediaPlayer.pause();
 
         } else if (v.getId() == R.id.btnStop) {
 
+            timer.cancel();
             mediaPlayer.stop();
             mediaPlayer = MediaPlayer.create(this, R.raw.sample_music);
 
