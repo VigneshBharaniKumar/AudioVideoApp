@@ -1,26 +1,31 @@
 package com.vignesh.audiovideo;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.MediaController;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private VideoView videoView;
     private Button btnPlay;
+    private TextView txtBuffering;
 
     private MediaController controller;
 
     private int mCurrentPosition = 0;
     private static final String PLAYBACK_TIME = "play_time";
+    //    private static final String VIDEO_SAMPLE = String.valueOf(R.raw.video_sample);
+    private static final String VIDEO_SAMPLE = "https://developers.google.com/training/images/tacoma_narrows.mp4";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         videoView = findViewById(R.id.videoView);
         btnPlay = findViewById(R.id.btnPlay);
+        txtBuffering = findViewById(R.id.txtBuffering);
 
         controller = new MediaController(this);
         videoView.setMediaController(controller);
@@ -51,15 +57,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initializePlayer() {
 
-        Uri videoUri = getMedia();
+        txtBuffering.setVisibility(View.VISIBLE);
+
+        Uri videoUri = getMedia(VIDEO_SAMPLE);
         videoView.setVideoURI(videoUri);
 
-        if (mCurrentPosition > 0) {
-            videoView.seekTo(mCurrentPosition);
-        } else {
-            // Skipping to 1 shows the first frame of the video.
-            videoView.seekTo(1);
-        }
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                txtBuffering.setVisibility(View.INVISIBLE);
+
+                if (mCurrentPosition > 0) {
+                    videoView.seekTo(mCurrentPosition);
+                } else {
+                    // Skipping to 1 shows the first frame of the video.
+                    videoView.seekTo(1);
+                }
+
+            }
+        });
 
         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
@@ -71,9 +87,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    private Uri getMedia () {
+    private Uri getMedia(String mediaName) {
 
-        return Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.video_sample);
+        if (URLUtil.isValidUrl(mediaName))
+            return Uri.parse(mediaName);
+        else
+            return Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.video_sample);
 
     }
 
