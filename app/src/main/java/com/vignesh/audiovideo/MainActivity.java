@@ -13,12 +13,15 @@ import android.widget.VideoView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private VideoView videoView;
     private Button btnPlay;
     private Button btnPre, btnFwd;
     private TextView txtBuffering;
+    private Button btnPlayMusic, btnPause, btnStop;
 
 //    private MediaController controller;
 
@@ -26,6 +29,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String PLAYBACK_TIME = "play_time";
     //    private static final String VIDEO_SAMPLE = String.valueOf(R.raw.video_sample);
     private static final String VIDEO_SAMPLE = "https://developers.google.com/training/images/tacoma_narrows.mp4";
+
+    private MediaPlayer mediaPlayer;
+    private static final String SAMPLE_MUSIC = String.valueOf(R.raw.sample_music);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +47,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnPre = findViewById(R.id.btnPre);
         btnFwd = findViewById(R.id.btnFwd);
         txtBuffering = findViewById(R.id.txtBuffering);
+        btnPlayMusic = findViewById(R.id.btnPlayMusic);
+        btnPause = findViewById(R.id.btnPause);
+        btnStop = findViewById(R.id.btnStop);
 
 //        controller = new MediaController(this);
 //        videoView.setMediaController(controller);
 //        controller.setAnchorView(videoView);
 
+        mediaPlayer = MediaPlayer.create(this, R.raw.sample_music);
+
         btnPlay.setOnClickListener(MainActivity.this);
+        btnPre.setOnClickListener(MainActivity.this);
+        btnFwd.setOnClickListener(MainActivity.this);
+        btnPlayMusic.setOnClickListener(MainActivity.this);
+        btnPause.setOnClickListener(MainActivity.this);
+        btnStop.setOnClickListener(MainActivity.this);
+
+        /*Audio Media Player*/
+        /*try {
+            mediaPlayer.setDataSource("android.resource://" + getPackageName() + "/" + SAMPLE_MUSIC);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mediaPlayer.start();
+            }
+        });
+        mediaPlayer.prepareAsync();*/
 
     }
 
@@ -62,21 +92,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 btnPlay.setText("Play");
             }
 
-        }
-
-        else if (v.getId() == R.id.btnPre) {
+        } else if (v.getId() == R.id.btnPre) {
 
             /*Not working*/
             videoView.seekTo(videoView.getCurrentPosition() - 10000);
             videoView.start();
 
-        }
-
-        else if (v.getId() == R.id.btnFwd) {
+        } else if (v.getId() == R.id.btnFwd) {
 
             /*Not working*/
             videoView.seekTo(videoView.getCurrentPosition() + 10000);
             videoView.start();
+
+        } else if (v.getId() == R.id.btnPlayMusic) {
+
+            mediaPlayer.start();
+
+        } else if (v.getId() == R.id.btnPause) {
+
+            mediaPlayer.pause();
+
+        } else if (v.getId() == R.id.btnStop) {
+
+            mediaPlayer.stop();
+            mediaPlayer = MediaPlayer.create(this, R.raw.sample_music);
 
         }
 
@@ -166,4 +205,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onSaveInstanceState(outState);
         outState.putInt(PLAYBACK_TIME, mCurrentPosition);
     }
+
 }
